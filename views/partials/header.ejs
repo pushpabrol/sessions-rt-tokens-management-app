@@ -25,7 +25,7 @@
 }
 
 .container {
-  max-width: 80%;
+  max-width: 100%;
   margin: 0 auto;
   padding: 0 20px;
 }
@@ -48,7 +48,33 @@ footer {
   text-align: center;
 }
 
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 9px;
+    }
+    th, td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: left;
+    }
+    th {
+        background-color: #f2f2f2;
+    }
+    tr:nth-child(even) {
+        background-color: #f9f9f9;
+    }
+    tr:hover {
+        background-color: #eaeaea;
+    }
 
+    /* Responsive table styling */
+    @media (max-width: 900px) {
+        table, thead, tbody, th, td, tr {
+            display: flexbox;
+        }
+        
+    }
     </style>
 
 

@@ -1,24 +1,50 @@
 <%- include('partials/header') %>
-    <h3>User Sessions for <%= userId %></h3>
+<a style="float: right;" href="javascript:history.back()">Back</a>
+<h3>User Sessions for <%= userId %></h3>
 <% if (sessions.length > 0) { %>
-    <% sessions.forEach(session => { %>
-        <div style="padding-bottom: 10px;">
-            Session ID: <%= session.id %> &nbsp; | &nbsp; <form style="display: inline;" action="/revoke-session/<%= session.id %>" method="POST">  
-                    <input type="hidden" name="userId" id="userId" value="<%= session.userId %>" />             
-                                                <button type="submit">Revoke</button>
-            </form>
-            <!-- Add more session details as needed -->
-        </div>
-    <% }); %>
-    
-    <form action="/revoke-sessions/<%= sessions[0].userId %>" method="POST">
+    <table>
+        <tr>
+            <th>Session ID</th>
+            <th>Created At</th>
+            <th>Updated At</th>
+            <th>Authenticated At</th>
+            <th>Authentication</th>
+            <th>Idle Expires At</th>
+            <th>Expires At</th>
+            <th>Client</th>
+            <th>Device</th>
+            <th>Action</th>
+        </tr>
+        <% sessions.forEach(session => { %>
+            <tr>
+                <td><%= session.id %></td>
+                <td><%= session.created_at %></td>
+                <td><%= session.updated_at %></td>
+                <td><%= session.authenticated_at %></td>
+                <td><%= JSON.stringify(session.authentication) %></td>
+                <td><%= session.idle_expires_at %></td>
+                <td><%= session.expires_at %></td>
+                <td>
+                    <% session.clients.forEach(cl => { %>
+                        <%= JSON.stringify(cl) %><br>
+                    <% }); %>
+                </td>
+                <td><%= JSON.stringify(session.device) %></td>
+                <td>
+                    <form action="/revoke-session/<%= session.id %>" method="POST">  
+                        <input type="hidden" name="userId" value="<%= userId %>" />
+                        <button type="submit">Revoke</button>
+                    </form>
+                </td>
+            </tr>
+        <% }); %>
+    </table>
+    <form action="/revoke-sessions/<%= userId %>" method="POST">
         <button type="submit">Revoke All Sessions</button>
     </form>
 <% } else { %>
-        <p> No active sessions!</p>
+    <p>No active sessions!</p>
 <% } %>
-
-    <a href="/users">Back to Users List(first 100)</a> &nbsp;| &nbsp;<a href="/user-search">Back to Users Search</a>    
-
-
+<hr>
+<a href="/users">Back to Users List (first 100)</a> &nbsp;|&nbsp; <a href="/user-search">Back to User Search</a>
 <%- include('partials/footer') %>

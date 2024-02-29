@@ -1,5 +1,6 @@
 <%- include('partials/header') %>
-    <h1>User Management</h1>
+<a style="float: right;" href="javascript:history.back()">Back</a>
+    <h3>User Management</h3>
     <form action="/delete-users" method="POST">
         <% users.forEach(user => { %>
             <div>
@@ -10,7 +11,11 @@
                 <a href="/user-refresh-tokens/<%= user.user_id %>">Manage Refresh Tokens</a>
             </div>
         <% }); %>
+        <br>
         <button type="submit">Delete Selected Users</button>
+
+        <hr>
+       
     </form>
 <%- include('partials/footer') %>
 

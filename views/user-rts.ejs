@@ -1,25 +1,54 @@
 <%- include('partials/header') %>
-    <h1>Refresh Tokens for: <%= userId %></h1>
+<a style="float: right;" href="javascript:history.back()">Back</a>
+<h3>Refresh Tokens for: <%= userId %></h3>
+
 <% if (tokens.length > 0) { %>
-    <% tokens.forEach(token => { %>
-        
-        <div style="padding-bottom: 10px;">
-            Token ID: <%= token.id %> &nbsp; | &nbsp; <form style="display: inline;" action="/revoke-refresh-token/<%= token.id %>" method="POST">  
-                    <input type="hidden" name="userId" id="userId" value="<%= token.userId %>" />             
-                                                <button type="submit">Revoke</button>
-            </form>
-            <!-- Add more session details as needed -->
-        </div>
-    <% }); %>
+    <h4><%= tokens.length %> tokens found!</h4>
+    <table>
+        <tr>
+            <th>#</th>
+            <th>Token ID</th>
+            <th>Created At</th>
+            <th>Client ID</th>
+            <th>Session ID</th>
+            <th>Rotating</th>
+            <th>Resource Server</th>
+            <th>Device</th>
+            <th>Expires At</th>
+            <th>Idle Expires At</th>
+            <th>Action</th>
+        </tr>
+        <% tokens.forEach((token, index) => { %>
+        <tr>
+            <td><%= index + 1 %></td>
+            <td><%= token.id %></td>
+            <td><%= token.created_at %></td>
+            <td><%= token.client_id %></td>
+            <td><%= token.session_id %></td>
+            <td><%= token.rotating %></td>
+            <td><%= JSON.stringify(token.resource_servers) %></td>
+            <td><%= JSON.stringify(token.device) %></td>
+            <td><%= token.expires_at %></td>
+            <td><%= token.idle_expires_at %></td>
+            <td>
+                <form action="/revoke-refresh-token/<%= token.id %>" method="POST">
+                    <input type="hidden" name="userId" id="userId" value="<%= userId %>" />
+                    <button type="submit">Revoke</button>
+                </form>
+            </td>
+        </tr>
+        <% }); %>
+    </table>
     
-    <form action="/revoke-refresh-tokens/<%= user %>" method="POST">
+    <form action="/revoke-refresh-tokens/<%= userId %>" method="POST">
         <button type="submit">Revoke All Tokens</button>
     </form>
 <% } else { %>
-        <p> No Refresh Tokens!</p>
+    <p>No Refresh Tokens!</p>
 <% } %>
 
-    <a href="/users">Back to Users List(first 100)</a> &nbsp;| &nbsp;<a href="/user-search">Back to Users Search</a>    
+<hr>
 
+<a href="/users">Back to Users List(first 100)</a> &nbsp;|&nbsp; <a href="/user-search">Back to Users Search</a>
 
-    <%- include('partials/footer') %>
+<%- include('partials/footer') %>

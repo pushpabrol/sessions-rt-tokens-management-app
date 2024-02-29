@@ -74,7 +74,7 @@ app.post('/search-user', requiresAuth(),customClaimCheck((req, user) => {
         res.render('users', { users: searchResponse.data, isAuthenticated: req.oidc.isAuthenticated() });
 
     } else {
-      res.send('User not found');
+        res.render('user-search', {isAuthenticated: req.oidc.isAuthenticated(), email : email, users : [] });
     }
   });
   

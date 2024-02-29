@@ -3,7 +3,14 @@
     <p>You can lookup a user to manage the user's sessions and refresh tokens!</p>
     <form action="/search-user" method="POST">
         <label for="email">Email:</label>
-        <input type="email" id="email" name="email" required>
+        <% if (typeof email !== 'undefined') { %>
+        <input type="email" id="email" name="email" required value="<%= email %>">
+        <% } else { %>
+            <input type="email" id="email" name="email" required value="">
+            <% } %>
         <button type="submit">Search</button>
     </form>
+    <% if (typeof email !== 'undefined' && email !== null && email !== "" && typeof users !== 'undefined' && users.length === 0) { %>
+        <h4> No users found. Please try again with a different email address!</h4>
+        <% } %>
     <%- include('partials/footer') %>
