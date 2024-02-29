@@ -42,7 +42,7 @@ app.use(auth({
   authRequired: false,
   auth0Logout: true,
   issuerBaseURL: `https://${process.env.AUTH0_DOMAIN}/`,
-  baseURL: 'http://localhost:3000',
+  baseURL: process.env.BASE_URL || 'http://localhost:3000',
   clientID: process.env.AUTH0_CLIENT_ID,
   secret: process.env.SESSION_SECRET,
   idpLogout: true,
@@ -184,7 +184,7 @@ app.get('/users', requiresAuth(),customClaimCheck((req, user) => {
 
 
   app.get('/logout', (req, res) => {
-    res.oidc.logout({ returnTo: 'http://localhost:3000' });
+    res.oidc.logout({ returnTo: process.env.BASE_URL || 'http://localhost:3000' });
   });
 
 app.listen(port, () => console.log(`Listening on port ${port}`));
