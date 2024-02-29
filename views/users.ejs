@@ -1,7 +1,8 @@
 <%- include('partials/header') %>
 <a style="float: right;" href="javascript:history.back()">Back</a>
     <h3>User Management</h3>
-    <form action="/delete-users" method="POST">
+
+    <!-- <form action="/delete-users" method="POST"> -->
         <% users.forEach(user => { %>
             <div>
                 <input type="checkbox" name="userIds[]" value="<%= user.user_id %>" />
@@ -12,11 +13,11 @@
             </div>
         <% }); %>
         <br>
-        <button type="submit">Delete Selected Users</button>
+        <!-- <button type="submit">Delete Selected Users</button> -->
 
         <hr>
        
-    </form>
+    <!-- </form> -->
 <%- include('partials/footer') %>
 
 
