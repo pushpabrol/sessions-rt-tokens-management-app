@@ -1,0 +1,25 @@
+<%- include('partials/header') %>
+    <h1>Refresh Tokens for: <%= userId %></h1>
+<% if (tokens.length > 0) { %>
+    <% tokens.forEach(token => { %>
+        
+        <div style="padding-bottom: 10px;">
+            Token ID: <%= token.id %> &nbsp; | &nbsp; <form style="display: inline;" action="/revoke-refresh-token/<%= token.id %>" method="POST">  
+                    <input type="hidden" name="userId" id="userId" value="<%= token.userId %>" />             
+                                                <button type="submit">Revoke</button>
+            </form>
+            <!-- Add more session details as needed -->
+        </div>
+    <% }); %>
+    
+    <form action="/revoke-refresh-tokens/<%= user %>" method="POST">
+        <button type="submit">Revoke All Tokens</button>
+    </form>
+<% } else { %>
+        <p> No Refresh Tokens!</p>
+<% } %>
+
+    <a href="/users">Back to Users List(first 100)</a> &nbsp;| &nbsp;<a href="/user-search">Back to Users Search</a>    
+
+
+    <%- include('partials/footer') %>

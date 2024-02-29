@@ -1,0 +1,17 @@
+<%- include('partials/header') %>
+    <h1>User Management</h1>
+    <form action="/delete-users" method="POST">
+        <% users.forEach(user => { %>
+            <div>
+                <input type="checkbox" name="userIds[]" value="<%= user.user_id %>" />
+                <%= user.email %> | <%= user.user_id %>
+                <a href="/user-sessions/<%= user.user_id %>">Manage Sessions</a>
+                &nbsp; | &nbsp; 
+                <a href="/user-refresh-tokens/<%= user.user_id %>">Manage Refresh Tokens</a>
+            </div>
+        <% }); %>
+        <button type="submit">Delete Selected Users</button>
+    </form>
+<%- include('partials/footer') %>
+
+

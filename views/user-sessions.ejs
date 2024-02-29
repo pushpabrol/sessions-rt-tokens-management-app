@@ -1,0 +1,24 @@
+<%- include('partials/header') %>
+    <h3>User Sessions for <%= userId %></h3>
+<% if (sessions.length > 0) { %>
+    <% sessions.forEach(session => { %>
+        <div style="padding-bottom: 10px;">
+            Session ID: <%= session.id %> &nbsp; | &nbsp; <form style="display: inline;" action="/revoke-session/<%= session.id %>" method="POST">  
+                    <input type="hidden" name="userId" id="userId" value="<%= session.userId %>" />             
+                                                <button type="submit">Revoke</button>
+            </form>
+            <!-- Add more session details as needed -->
+        </div>
+    <% }); %>
+    
+    <form action="/revoke-sessions/<%= sessions[0].userId %>" method="POST">
+        <button type="submit">Revoke All Sessions</button>
+    </form>
+<% } else { %>
+        <p> No active sessions!</p>
+<% } %>
+
+    <a href="/users">Back to Users List(first 100)</a> &nbsp;| &nbsp;<a href="/user-search">Back to Users Search</a>    
+
+
+<%- include('partials/footer') %>

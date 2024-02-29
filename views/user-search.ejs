@@ -1,0 +1,9 @@
+<%- include('partials/header') %>
+    <h1>Search User</h1>
+    <p>You can lookup a user to manage the user's sessions and refresh tokens!</p>
+    <form action="/search-user" method="POST">
+        <label for="email">Email:</label>
+        <input type="email" id="email" name="email" required>
+        <button type="submit">Search</button>
+    </form>
+    <%- include('partials/footer') %>
