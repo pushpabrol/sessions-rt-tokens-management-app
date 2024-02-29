@@ -50,9 +50,10 @@ app.use(auth({
 
 app.set('view engine', 'ejs');
 //app.set("views", "views");
-//app.set("views", path.join(__dirname, "views"));
 const path = require('path');
-app.set('views', path.join(__dirname, '..', 'views'));
+
+app.set("views", path.join(__dirname, "views"));
+//app.set('views', path.join(__dirname, '..', 'views'));
 
 app.get('/', (req, res) => {
     if(req.oidc.isAuthenticated())     console.log(req.oidc.user);
