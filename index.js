@@ -4,6 +4,12 @@ const session = require('express-session');
 const { auth, requiresAuth, claimCheck } = require('express-openid-connect');
 const axios = require('axios');
 
+//const requiresValidLogoutToken = require('./validateLogoutToken');
+
+const { kv } = require("@vercel/kv");
+//const session = await kv.get("user_1_session");
+
+
 async function getManagementApiToken() {
   const response = await axios.post(`https://${process.env.AUTH0_DOMAIN}/oauth/token`, {
     grant_type: 'client_credentials',
@@ -26,6 +32,30 @@ function customClaimCheck(claimCheck) {
     };
   }
 
+  async function checkSessionLogout(req, res, next) {
+    const sid = req.oidc.user && req.oidc.user.sid; // Obtain session ID from request session. Adjust according to how your session ID is stored.
+    if(sid && sid !== null){
+    const isLoggedOut = await kv.get(`${sid}`);
+    if (isLoggedOut) {
+      req.logout(); 
+      res.redirect('/login'); // Redirect to login page or handle as needed.
+      return;
+    }
+    }
+    next();
+  }
+
+  const onLogoutToken = async (token) => {
+    const { sid: logoutSid, sub: logoutSub } = token;
+    // Note: you may not be able to access all sessions in your store
+    // and this is likely to be an expensive operation if you have lots of sessions.
+    await kv.set(logoutSid, Date.now(), { ex: 28800, nx: true });
+
+  };
+  
+
+  
+
 
 const app = express();
 const port = 3000;
@@ -44,10 +74,21 @@ app.use(auth({
   issuerBaseURL: `https://${process.env.AUTH0_DOMAIN}/`,
   baseURL: process.env.BASE_URL || 'http://localhost:3000',
   clientID: process.env.AUTH0_CLIENT_ID,
+  clientSecret:process.env.AUTH0_CLIENT_SECRET,
   secret: process.env.SESSION_SECRET,
   idpLogout: true,
+  authorizationParams: {
+    response_type: 'code',
+    response_mode:"query",
+    scope:"openid profile email sid"
+  },
+  backchannelLogout: {
+    onLogoutToken,
+    isLoggedOut: false,
+    onLogin: false,
+  }
 }));
-
+app.use(checkSessionLogout);
 app.set('view engine', 'ejs');
 //app.set("views", "views");
 const path = require('path');
@@ -56,13 +97,17 @@ app.set("views", path.join(__dirname, "views"));
 //app.set('views', path.join(__dirname, '..', 'views'));
 
 app.get('/', (req, res) => {
-    if(req.oidc.isAuthenticated())     console.log(req.oidc.user);
+    if(req.oidc.isAuthenticated()) {
+             console.log(req.oidc.idToken);
+             console.log(req.oidc.idTokenClaims);
+
+    }
   res.render('index', { isAuthenticated: req.oidc.isAuthenticated() });
 });
 
 app.post('/search-user', requiresAuth(),customClaimCheck((req, user) => {
     console.log("claims");
-    return user.app_metadata && user.app_metadata.admin && user.app_metadata.admin === true;
+    return user.admin === true;
   }), async (req, res) => {
     const email = req.body.email;
     const token = req.session.mgmtToken || await getManagementApiToken();
@@ -81,7 +126,7 @@ app.post('/search-user', requiresAuth(),customClaimCheck((req, user) => {
 
 app.get('/users', requiresAuth(),customClaimCheck((req, user) => {
     console.log("claims");
-    return user.app_metadata && user.app_metadata.admin && user.app_metadata.admin === true;
+    return user.admin === true;
   }), async (req, res) => {
     const token = req.session.mgmtToken ||  await getManagementApiToken();
     req.session.mgmtToken = token;
@@ -96,7 +141,7 @@ app.get('/users', requiresAuth(),customClaimCheck((req, user) => {
 
   app.get('/user-search',requiresAuth(),customClaimCheck((req, user) => {
     console.log("claims");
-    return user.app_metadata && user.app_metadata.admin && user.app_metadata.admin === true;
+    return user.admin === true;
   }), async (req, res) => {
     res.render('user-search', {isAuthenticated: req.oidc.isAuthenticated()});
   });
@@ -104,7 +149,7 @@ app.get('/users', requiresAuth(),customClaimCheck((req, user) => {
 
   app.get('/user-sessions/:userId',requiresAuth(),customClaimCheck((req, user) => {
     console.log("claims");
-    return user.app_metadata && user.app_metadata.admin && user.app_metadata.admin === true;
+    return user.admin === true;
   }), async (req, res) => {
 
     const token = req.session.mgmtToken ||  await getManagementApiToken();
@@ -119,7 +164,7 @@ app.get('/users', requiresAuth(),customClaimCheck((req, user) => {
   // Revoke all sessions for a user
   app.post('/revoke-sessions/:userId',requiresAuth(),customClaimCheck((req, user) => {
     console.log("claims");
-    return user.app_metadata && user.app_metadata.admin && user.app_metadata.admin === true;
+    return user.admin === true;
   }), async (req, res) => {
     const token = req.session.mgmtToken ||  await getManagementApiToken();
     const userId = req.params.userId;
@@ -131,7 +176,7 @@ app.get('/users', requiresAuth(),customClaimCheck((req, user) => {
 
   app.post('/revoke-session/:id', customClaimCheck((req, user) => {
     console.log("claims");
-    return user.app_metadata && user.app_metadata.admin && user.app_metadata.admin === true;
+    return user.admin === true;
   }), async (req, res) => {
     const token = req.session.mgmtToken ||  await getManagementApiToken();
     const id = req.params.id;
@@ -145,7 +190,7 @@ app.get('/users', requiresAuth(),customClaimCheck((req, user) => {
 
   app.get('/user-refresh-tokens/:userId',requiresAuth(),customClaimCheck((req, user) => {
     console.log("claims");
-    return user.app_metadata && user.app_metadata.admin && user.app_metadata.admin === true;
+    return user.admin === true;
   }), async (req, res) => {
     const token = req.session.mgmtToken ||  await getManagementApiToken();
     const userId = req.params.userId;
@@ -159,7 +204,7 @@ app.get('/users', requiresAuth(),customClaimCheck((req, user) => {
   // Revoke all sessions for a user
   app.post('/revoke-refresh-tokens/:userId',requiresAuth(),customClaimCheck((req, user) => {
     console.log("claims");
-    return user.app_metadata && user.app_metadata.admin && user.app_metadata.admin === true;
+    return user.admin === true;
   }), async (req, res) => {
     const token = req.session.mgmtToken ||  await getManagementApiToken();
     const userId = req.params.userId;
@@ -171,7 +216,7 @@ app.get('/users', requiresAuth(),customClaimCheck((req, user) => {
 
   app.post('/revoke-refresh-token/:id',requiresAuth(),customClaimCheck((req, user) => {
     console.log("claims");
-    return user.app_metadata && user.app_metadata.admin && user.app_metadata.admin === true;
+    return user.admin === true;
   }), async (req, res) => {
     const token = req.session.mgmtToken ||  await getManagementApiToken();
     const id = req.params.id;
@@ -186,5 +231,15 @@ app.get('/users', requiresAuth(),customClaimCheck((req, user) => {
   app.get('/logout', (req, res) => {
     res.oidc.logout({ returnTo: process.env.BASE_URL || 'http://localhost:3000' });
   });
+
+
+//   app.post('/backchannel/logout',requiresValidLogoutToken, async (req, res) => {
+//     await kv.set(req.logoutToken.sid, Date.now(), { ex: 28800, nx: true });
+    
+    
+//   });
+
+
+
 
 app.listen(port, () => console.log(`Listening on port ${port}`));
