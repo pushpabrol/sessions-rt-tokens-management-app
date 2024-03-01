@@ -235,11 +235,10 @@ app.get('/users', requiresAuth(),customClaimCheck((req, user) => {
   });
 
 
-//   app.post('/backchannel/logout',requiresValidLogoutToken, async (req, res) => {
-//     await kv.set(req.logoutToken.sid, Date.now(), { ex: 28800, nx: true });
+  app.post('/backchannel-logout', async (req, res) => {
+    await kv.set(req.logoutToken.sid, Date.now(), { ex: 28800, nx: true });
     
-    
-//   });
+  });
 
 
 
