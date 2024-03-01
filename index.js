@@ -46,6 +46,8 @@ function customClaimCheck(claimCheck) {
   }
 
   const onLogoutToken = async (token) => {
+    console.log("In onLogoutToken");
+    console.log(token);
     const { sid: logoutSid, sub: logoutSub } = token;
     // Note: you may not be able to access all sessions in your store
     // and this is likely to be an expensive operation if you have lots of sessions.
