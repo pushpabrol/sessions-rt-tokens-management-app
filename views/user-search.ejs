@@ -1,16 +1,19 @@
-<%- include('partials/header') %>
-    <h1>Search User</h1>
-    <p>You can lookup a user to manage the user's sessions and refresh tokens!</p>
-    <form action="/search-user" method="POST">
-        <label for="email">Email:</label>
-        <% if (typeof email !== 'undefined') { %>
-        <input type="email" id="email" name="email" required value="<%= email %>">
-        <% } else { %>
-            <input type="email" id="email" name="email" required value="">
-            <% } %>
-        <button type="submit">Search</button>
-    </form>
-    <% if (typeof email !== 'undefined' && email !== null && email !== "" && typeof users !== 'undefined' && users.length === 0) { %>
-        <h4> No users found. Please try again with a different email address!</h4>
-        <% } %>
-    <%- include('partials/footer') %>
+
+    <%- include('partials/header') %>
+<div class="card">
+    <div class="card-body">
+        <h5 class="card-title">Search for a User</h5>
+        <p class="card-text">Enter an email to manage sessions and tokens.</p>
+        <form action="/search-user" method="POST" class="form-inline">
+            <div class="form-group mb-2">
+                <label for="email" class="sr-only">Email</label>
+                <input type="email" class="form-control" id="email" name="email" placeholder="Email" required>
+            </div>
+            <button type="submit" class="btn btn-primary mb-2">Search</button>
+        </form>
+    </div>
+</div>
+<% if (typeof email !== 'undefined' && email !== null && email !== "" && typeof users !== 'undefined' && users.length === 0) { %>
+    <h4> No users found. Please try again with a different email address!</h4>
+    <% } %>
+<%- include('partials/footer') %>

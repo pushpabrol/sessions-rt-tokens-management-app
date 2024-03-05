@@ -7,7 +7,6 @@ const axios = require('axios');
 //const requiresValidLogoutToken = require('./validateLogoutToken');
 
 const { kv } = require("@vercel/kv");
-//const session = await kv.get("user_1_session");
 
 
 async function getManagementApiToken() {
@@ -83,14 +82,15 @@ app.use(auth({
     response_type: 'code',
     response_mode:"query",
     scope:"openid profile email sid"
-  },
-  backchannelLogout: {
-    onLogoutToken,
-    isLoggedOut: false,
-    onLogin: false,
   }
+//   ,
+//   backchannelLogout: {
+//     onLogoutToken,
+//     isLoggedOut: false,
+//     onLogin: false,
+//   }
 }));
-app.use(checkSessionLogout);
+//app.use(checkSessionLogout);
 app.set('view engine', 'ejs');
 //app.set("views", "views");
 const path = require('path');

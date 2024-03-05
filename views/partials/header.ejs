@@ -5,92 +5,44 @@
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
-                body {
-        font-family: 'Roboto', sans-serif;
-        color: #333;
-        }
-        h1, h2, h3 {
-        font-weight: 700;
-        }
-        .btn {
-  background-color: #0056B3;
-  color: white;
-  padding: 10px 20px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-}
-.btn:hover {
-  background-color: #004494;
-}
-
+      
 .container {
-  max-width: 100%;
-  margin: 0 auto;
-  padding: 0 20px;
+max-width: 100%;
+margin: 0 auto;
+padding: 0 20px;
 }
 
-.navbar {
-  background-color: #0056B3;
-  color: #fff;
-  padding: 10px 20px;
-}
-.navbar a {
-  color: #fff;
-  margin-right: 15px;
-  text-decoration: none;
+
+table {
+width: 100%;
+border-collapse: collapse;
+font-size: 9px;
 }
 
-footer {
-  background-color: #dbc6c6;
-  color: white;
-  padding: 20px;
-  text-align: center;
+/* Responsive table styling */
+@media (max-width: 900px) {
+table, thead, tbody, th, td, tr {
+    display: flexbox;
 }
 
-    table {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 9px;
-    }
-    th, td {
-        border: 1px solid #ddd;
-        padding: 8px;
-        text-align: left;
-    }
-    th {
-        background-color: #f2f2f2;
-    }
-    tr:nth-child(even) {
-        background-color: #f9f9f9;
-    }
-    tr:hover {
-        background-color: #eaeaea;
-    }
-
-    /* Responsive table styling */
-    @media (max-width: 900px) {
-        table, thead, tbody, th, td, tr {
-            display: flexbox;
-        }
-        
-    }
-    </style>
-
-
-    <title>Auth0 Sessions & Refresh Token Management App</title>
+}
+</style>
+    <title>Auth0 Management App</title>
 </head>
-<body class="container">
-    <header>
-        <% if (typeof isAuthenticated !== 'undefined' && isAuthenticated) { %>
-            <navbar class="navbar">
-                <a href="/">Home</a>
-                <a href="/user-search">Search & Manager User Sessions & Refresh Tokens</a>
-                <a href="/users">List Users (...first 100)</a>
-
-            </navbar>
-            
-        <% } else { %>
-            <a href="/login">Login</a>
-        <% } %>
-    </header>
+<body>
+<header class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container">
+        <a class="navbar-brand" href="/">Auth0 Management</a>
+        <div class="navbar-nav">
+            <a class="nav-item nav-link" href="/">Home</a>
+            <a class="nav-item nav-link" href="/user-search">User Search</a>
+            <a class="nav-item nav-link" href="/users">Users</a>
+            <% if (isAuthenticated) { %>
+                <a class="nav-item nav-link" href="/logout">Logout</a>
+            <% } else { %>
+                <a class="nav-item nav-link" href="/login">Login</a>
+            <% } %>
+        </div>
+    </div>
+</header>
+<div class="container mt-4">
