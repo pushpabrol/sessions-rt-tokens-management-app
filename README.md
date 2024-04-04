@@ -12,6 +12,19 @@ This Express application integrates with Auth0 for authentication, providing fun
 ## Prerequisites
 - Node.js installed.
 - Auth0 account and application setup.
+- To login as admin the application checks for an `admin` claim in the id_token - To add this for your admin user please set a property in the user's app_metadata as
+
+```
+admin: true
+```
+- Additiobnally, you will need to create an **ACTION** and add it to the **post login trigger** with the following code to ensure this property gets set as a custom claim in the user's id_token as they login ( You only have to do this for the user that will login as admin and view/manage the sessions and tokens)
+  
+```
+exports.onExecutePostLogin = async (event, api) => {
+    if(event.user.app_metadata && event.user.app_metadata.admin) api.idToken.setCustomClaim("admin", event.user.app_metadata.admin); 
+};
+
+```
 
 ## Setup
 1. Clone the repository and install dependencies:
