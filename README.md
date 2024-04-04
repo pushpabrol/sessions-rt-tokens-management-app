@@ -34,7 +34,8 @@ exports.onExecutePostLogin = async (event, api) => {
 2. Configure environment variables in a `.env` file:
    ```
     AUTH0_DOMAIN=auth0_domain
-    AUTH0_CLIENT_ID=spa client id
+    AUTH0_CLIENT_ID=client id
+    AUTH0_CLIENT_SECRET=client secret
     AUTH0_MANAGEMENT_CLIENT_ID=mgmt client id
     AUTH0_MANAGEMENT_CLIENT_SECRET=mgmt client secret
     AUTH0_MANAGEMENT_API_AUDIENCE=https://auth0_domain/api/v2/
