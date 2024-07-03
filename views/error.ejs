@@ -1,5 +1,7 @@
 <%- include('partials/header') %>
-    <h1>Error</h1>
-    <p><%= message %></p>
-    <a href="/">Go back to the homepage</a>
+<div class="container mx-auto mt-4">
+    <h1 class="text-2xl font-bold text-red-500">Error</h1>
+    <p class="text-gray-700"><%= message %></p>
+    <a href="/" class="text-blue-500 hover:underline">Go back to the homepage</a>
+</div>
 <%- include('partials/footer') %>

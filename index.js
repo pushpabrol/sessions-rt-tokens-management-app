@@ -6,7 +6,7 @@ const axios = require('axios');
 
 //const requiresValidLogoutToken = require('./validateLogoutToken');
 
-const { kv } = require("@vercel/kv");
+//const { kv } = require("@vercel/kv");
 
 
 async function getManagementApiToken() {
@@ -161,6 +161,56 @@ app.get('/users', requiresAuth(),customClaimCheck((req, user) => {
     });
     console.log(sessions.data);
     res.render('user-sessions', { sessions: sessions.data.sessions, isAuthenticated: req.oidc.isAuthenticated(), userId : userId  });
+  });
+
+  app.get('/user-state/:userId',requiresAuth(),customClaimCheck((req, user) => {
+    console.log("claims");
+    return user.admin === true;
+  }), async (req, res) => {
+
+    const token = req.session.mgmtToken ||  await getManagementApiToken();
+    const userId = req.params.userId;
+    const user = await axios.get(`https://${process.env.AUTH0_DOMAIN}/api/v2/users/${userId}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    console.log(user.data);
+    res.render('user-states', { user :user.data , isAuthenticated: req.oidc.isAuthenticated(), userId : userId });
+  });
+
+  app.post('/update-user-state', requiresAuth(),customClaimCheck((req, user) => {
+    console.log("claims");
+    return user.admin === true;
+  }), async (req, res) => {
+    const { userId, state } = req.body;
+    let updateData;
+  
+    switch (state) {
+      case 'Active':
+        updateData = { blocked: false, email_verified: true };
+        break;
+      case 'Locked':
+        updateData = { blocked: true };
+        break;
+      case 'Forced Password Reset':
+        updateData = { blocked: false, email_verified: false };
+        break;
+      default:
+        return res.status(400).send('Invalid state');
+    }
+  
+    try {
+      const token = req.session.mgmtToken ||  await getManagementApiToken();
+      await axios.patch(`https://${process.env.AUTH0_DOMAIN}/api/v2/users/${userId}`, updateData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      res.redirect('/users');
+    } catch (error) {
+      console.error(error);
+      res.status(500).send('Error updating user state');
+    }
   });
   
   // Revoke all sessions for a user

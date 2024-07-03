@@ -2,47 +2,48 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
-      
-.container {
-max-width: 100%;
-margin: 0 auto;
-padding: 0 20px;
-}
+      .container {
+        max-width: 100%;
+        margin: 0 auto;
+        padding: 0 20px;
+      }
 
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 9px;
+      }
 
-table {
-width: 100%;
-border-collapse: collapse;
-font-size: 9px;
-}
-
-/* Responsive table styling */
-@media (max-width: 900px) {
-table, thead, tbody, th, td, tr {
-    display: flexbox;
-}
-
-}
-</style>
-    <title>Sessions & Tokens Management App</title>
+      /* Responsive table styling */
+      @media (max-width: 900px) {
+        table, thead, tbody, th, td, tr {
+          display: block;
+        }
+      }
+    </style>
+    <title>Users Management</title>
 </head>
 <body>
-<header class="navbar navbar-expand-lg navbar-dark bg-primary">
-    <div class="container">
-        <a class="navbar-brand" href="/">Sessions & Tokens Management</a>
-        <div class="navbar-nav">
-            <a class="nav-item nav-link" href="/">Home</a>
-            <a class="nav-item nav-link" href="/user-search">User Search</a>
-            <a class="nav-item nav-link" href="/users">Users</a>
+<header class="bg-blue-600">
+    <div class="container mx-auto flex justify-between items-center p-4">
+        <a class="text-white font-bold text-xl" href="/">Sessions & Tokens Management</a>
+        <nav class="flex space-x-4">
+            <a class="text-white" href="/">Home</a>
+            <a class="text-white" href="/user-search">User Search</a>
+            <a class="text-white" href="/users">Users</a>
             <% if (isAuthenticated) { %>
-                <a class="nav-item nav-link" href="/logout">Logout</a>
+                <a class="text-white" href="/logout">Logout</a>
             <% } else { %>
-                <a class="nav-item nav-link" href="/login">Login</a>
+                <a class="text-white" href="/login">Login</a>
             <% } %>
-        </div>
+        </nav>
     </div>
 </header>
-<div class="container mt-4">
+<div class="container mx-auto mt-4">
+    <!-- Rest of your content -->
+</div>
+</body>
+</html>

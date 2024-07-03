@@ -1,9 +1,9 @@
 </div> <!-- Closing container div -->
-<footer class="bg-light text-center text-lg-start mt-4">
+<footer class="bg-gray-100 text-center mt-4">
     <% if (typeof isAuthenticated !== 'undefined' && isAuthenticated) { %>
-        <a href="/logout">Logout</a>
+        <a href="/logout" class="text-blue-500 hover:underline">Logout</a>
     <% } %>
-    <div class="text-center p-3" style="background-color: rgba(0, 0, 0, 0.2);">
+    <div class="text-center p-3 bg-gray-200">
         © 2024 Sessions & Tokens Management App
     </div>
 </footer>

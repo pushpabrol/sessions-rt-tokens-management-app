@@ -1,0 +1,41 @@
+<%- include('partials/header') %>
+<div class="container mx-auto mt-4">
+    <a href="javascript:history.back()" class="bg-gray-500 text-white py-2 px-4 rounded mb-3 inline-block hover:bg-gray-700">Back</a>
+    <h3 class="text-xl font-bold mb-4">Manage User States for <%= userId %></h3>
+
+    <table class="min-w-full bg-white border border-gray-200">
+        <thead>
+            <tr class="bg-gray-200 text-gray-600 uppercase text-sm leading-normal">
+                <th class="py-3 px-6 text-left">Email</th>
+                <th class="py-3 px-6 text-left">State</th>
+                <th class="py-3 px-6 text-left">Action</th>
+            </tr>
+        </thead>
+        <tbody class="text-gray-600 text-sm font-light">
+            <tr class="border-b border-gray-200 hover:bg-gray-100">
+                <td class="py-3 px-6 text-left"><%= user.email %></td>
+                <td class="py-3 px-6 text-left">
+                    <% if (user.blocked) { %>
+                        Locked
+                    <% } else if (!user.email_verified) { %>
+                        Forced Password Reset
+                    <% } else { %>
+                        Active
+                    <% } %>
+                </td>
+                <td class="py-3 px-6 text-left">
+                    <form action="/update-user-state" method="post">
+                        <input type="hidden" name="userId" value="<%= user.user_id %>">
+                        <select name="state" class="form-select bg-white border border-gray-300 text-gray-700 py-2 px-3 rounded" required>
+                            <option value="Active" <%= !user.blocked && user.email_verified ? 'selected' : '' %>>Active</option>
+                            <option value="Locked" <%= user.blocked ? 'selected' : '' %>>Locked</option>
+                            <option value="Forced Password Reset" <%= !user.email_verified ? 'selected' : '' %>>Forced Password Reset</option>
+                        </select>
+                        <button type="submit" class="bg-yellow-500 text-white py-2 px-4 rounded hover:bg-yellow-700 mt-2 sm:mt-0">Update</button>
+                    </form>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+<%- include('partials/footer') %>
