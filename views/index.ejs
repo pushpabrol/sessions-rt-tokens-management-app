@@ -1,10 +1,12 @@
 <%- include('partials/header') %>
 <div class="container mx-auto mt-4 p-6 bg-gray-100 rounded-lg shadow-md">
-    <h1 class="text-4xl font-bold mb-4">Users Management!</h1>
-    <p class="text-lg mb-4">Manage user sessions, tokens and user state!</p>
-    <hr class="border-t border-gray-300 mb-4">
-    <p class="text-base mb-4">Start by searching a user or viewing the user list.</p>
-    <a class="bg-blue-500 text-white py-2 px-4 rounded mr-2 hover:bg-blue-700" href="/user-search" role="button">Search Users</a>
-    <a class="bg-gray-500 text-white py-2 px-4 rounded hover:bg-gray-700" href="/users" role="button">View Users</a>
+    <h1 class="text-4xl font-bold mb-6 text-staples-red">Users Management!</h1>
+    <p class="text-lg mb-6 text-gray-700">Manage user sessions, tokens, and user state!</p>
+    <hr class="border-t border-gray-300 mb-6">
+    <p class="text-base mb-6 text-gray-700">Start by searching a user or viewing the user list.</p>
+    <div class="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
+        <a class="bg-staples-red text-white py-3 px-6 rounded shadow-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-700 focus:ring-opacity-50 text-center" href="/user-search" role="button">Search Users</a>
+        <a class="bg-gray-500 text-white py-3 px-6 rounded shadow-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-700 focus:ring-opacity-50 text-center" href="/users" role="button">View Users</a>
+    </div>
 </div>
 <%- include('partials/footer') %>

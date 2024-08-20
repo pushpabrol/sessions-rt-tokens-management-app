@@ -1,7 +1,7 @@
 <%- include('partials/header') %>
 <div class="container mx-auto mt-4">
     <a href="javascript:history.back()" class="bg-gray-500 text-white py-2 px-4 rounded mb-3 inline-block hover:bg-gray-700">Back</a>
-    <h3 class="text-xl font-bold mb-3">Refresh Tokens for: <%= userId %></h3>
+    <h3 class="text-xl font-bold mb-3 text-staples-red">Refresh Tokens for: <%= userId %></h3>
     <% if (tokens.length > 0) { %>
         <h4 class="text-lg font-semibold mb-3"><%= tokens.length %> tokens found!</h4>
         <table class="min-w-full bg-white border border-gray-200">
@@ -36,7 +36,7 @@
                         <td class="py-3 px-6 text-left">
                             <form action="/revoke-refresh-token/<%= token.id %>" method="POST">
                                 <input type="hidden" name="userId" value="<%= userId %>" />
-                                <button type="submit" class="bg-red-500 text-white py-1 px-3 rounded hover:bg-red-700">Revoke</button>
+                                <button type="submit" class="bg-staples-red text-white py-1 px-3 rounded hover:bg-red-700">Revoke</button>
                             </form>
                         </td>
                     </tr>

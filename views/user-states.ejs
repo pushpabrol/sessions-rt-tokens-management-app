@@ -1,7 +1,7 @@
 <%- include('partials/header') %>
 <div class="container mx-auto mt-4">
     <a href="javascript:history.back()" class="bg-gray-500 text-white py-2 px-4 rounded mb-3 inline-block hover:bg-gray-700">Back</a>
-    <h3 class="text-xl font-bold mb-4">Manage User States for <%= userId %></h3>
+    <h3 class="text-xl font-bold mb-4 text-staples-red">Manage User States for <%= userId %></h3>
 
     <table class="min-w-full bg-white border border-gray-200">
         <thead>
@@ -24,18 +24,99 @@
                     <% } %>
                 </td>
                 <td class="py-3 px-6 text-left">
-                    <form action="/update-user-state" method="post">
-                        <input type="hidden" name="userId" value="<%= user.user_id %>">
-                        <select name="state" class="form-select bg-white border border-gray-300 text-gray-700 py-2 px-3 rounded" required>
-                            <option value="Active" <%= !user.blocked && user.email_verified ? 'selected' : '' %>>Active</option>
-                            <option value="Locked" <%= user.blocked ? 'selected' : '' %>>Locked</option>
-                            <option value="Forced Password Reset" <%= !user.email_verified ? 'selected' : '' %>>Forced Password Reset</option>
-                        </select>
-                        <button type="submit" class="bg-yellow-500 text-white py-2 px-4 rounded hover:bg-yellow-700 mt-2 sm:mt-0">Update</button>
-                    </form>
+                    <% if (user.blocked) { %>
+                        <button id="ciba-button" class="bg-staples-red text-white py-2 px-4 rounded hover:bg-red-700 mt-2 sm:mt-0">Authenticate user to unblock them</button>
+                        <div id="spinner" class="hidden spinner-border text-staples-red mt-4"></div>
+                        <div id="countdown" class="hidden text-gray-600 mt-2">Time remaining: <span id="time-remaining">300</span> seconds</div>
+                    <% } else { %>
+                        <form action="/update-user-state" method="post">
+                            <input type="hidden" name="userId" value="<%= user.user_id %>">
+                            <select name="state" class="form-select bg-white border border-gray-300 text-gray-700 py-2 px-3 rounded" required>
+                                <option value="Active" <%= !user.blocked && user.email_verified ? 'selected' : '' %>>Active</option>
+                                <option value="Locked" <%= user.blocked ? 'selected' : '' %>>Locked</option>
+                                <option value="Forced Password Reset" <%= !user.email_verified ? 'selected' : '' %>>Forced Password Reset</option>
+                            </select>
+                            <button type="submit" class="bg-staples-red text-white py-2 px-4 rounded hover:bg-red-700 mt-2 sm:mt-0">Update</button>
+                        </form>
+                    <% } %>
                 </td>
             </tr>
         </tbody>
     </table>
 </div>
+<script>
+    document.getElementById('ciba-button').addEventListener('click', function () {
+        const spinner = document.getElementById('spinner');
+        const countdown = document.getElementById('countdown');
+        const timeRemainingEl = document.getElementById('time-remaining');
+        let timeRemaining = 300;
+
+        spinner.classList.remove('hidden');
+        countdown.classList.remove('hidden');
+
+        const intervalId = setInterval(() => {
+            timeRemaining -= 1;
+            timeRemainingEl.textContent = timeRemaining;
+
+            if (timeRemaining <= 0) {
+                clearInterval(intervalId);
+                alert('CIBA request timed out. Please try again.');
+                spinner.classList.add('hidden');
+                countdown.classList.add('hidden');
+            }
+        }, 1000);
+
+        fetch('/start-ciba', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId: '<%= userId %>' })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.auth_req_id) {
+                pollTokenEndpoint(data.auth_req_id, intervalId);
+            } else {
+                clearInterval(intervalId);
+                alert('Failed to initiate CIBA');
+                spinner.classList.add('hidden');
+                countdown.classList.add('hidden');
+            }
+        })
+        .catch(error => {
+            clearInterval(intervalId);
+            console.error('Error initiating CIBA:', error);
+            alert('An error occurred while initiating CIBA.');
+            spinner.classList.add('hidden');
+            countdown.classList.add('hidden');
+        });
+    });
+
+    function pollTokenEndpoint(auth_req_id, countdownInterval) {
+        const intervalId = setInterval(() => {
+            fetch('/poll-token', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ auth_req_id })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.access_token) {
+                    clearInterval(intervalId);
+                    clearInterval(countdownInterval);
+                    alert('User successfully verified. Unblocking...');
+                    window.location.reload(); // Reload the page or redirect as needed
+                } else if (data.error) {
+                    clearInterval(intervalId);
+                    clearInterval(countdownInterval);
+                    alert('CIBA flow failed: ' + data.error_description);
+                    document.getElementById('spinner').classList.add('hidden');
+                    document.getElementById('countdown').classList.add('hidden');
+                }
+            })
+            .catch(error => {
+                console.error('Error polling token endpoint:', error);
+            });
+        }, 15000); // Poll every 15 seconds
+    }
+</script>
 <%- include('partials/footer') %>

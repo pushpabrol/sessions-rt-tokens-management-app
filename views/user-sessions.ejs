@@ -1,18 +1,14 @@
 <%- include('partials/header') %>
 <div class="container mx-auto mt-4">
     <a href="javascript:history.back()" class="bg-gray-500 text-white py-2 px-4 rounded mb-3 inline-block hover:bg-gray-700">Back</a>
-    <h3 class="text-xl font-bold mb-3">User Sessions for <%= userId %></h3>
+    <h3 class="text-xl font-bold mb-3 text-staples-red">User Sessions for <%= userId %></h3>
     <% if (sessions.length > 0) { %>
         <table class="min-w-full bg-white border border-gray-200">
             <thead>
                 <tr class="bg-gray-200 text-gray-600 uppercase text-sm leading-normal">
                     <th class="py-3 px-6 text-left">Session ID</th>
-                    <!-- <th>Created At</th>
-                    <th>Updated At</th> -->
                     <th class="py-3 px-6 text-left">Authenticated At</th>
                     <th class="py-3 px-6 text-left">Authentication</th>
-                    <!-- <th>Idle Expires At</th>
-                    <th>Expires At</th> -->
                     <th class="py-3 px-6 text-left">Client</th>
                     <th class="py-3 px-6 text-left">Device</th>
                     <th class="py-3 px-6 text-left">Action</th>
@@ -22,12 +18,8 @@
                 <% sessions.forEach(session => { %>
                     <tr class="border-b border-gray-200 hover:bg-gray-100">
                         <td class="py-3 px-6 text-left"><%= session.id %></td>
-                        <!-- <td><%= session.created_at %></td>
-                        <td><%= session.updated_at %></td> -->
                         <td class="py-3 px-6 text-left"><%= session.authenticated_at %></td>
                         <td class="py-3 px-6 text-left"><%= JSON.stringify(session.authentication) %></td>
-                        <!-- <td><%= session.idle_expires_at %></td>
-                        <td><%= session.expires_at %></td> -->
                         <td class="py-3 px-6 text-left">
                             <% session.clients.forEach(cl => { %>
                                 <%= JSON.stringify(cl) %><br>
@@ -37,7 +29,7 @@
                         <td class="py-3 px-6 text-left">
                             <form action="/revoke-session/<%= session.id %>" method="POST">  
                                 <input type="hidden" name="userId" value="<%= userId %>" />
-                                <button type="submit" class="bg-red-500 text-white py-1 px-3 rounded hover:bg-red-700">Revoke</button>
+                                <button type="submit" class="bg-staples-red text-white py-1 px-3 rounded hover:bg-red-700">Revoke</button>
                             </form>
                         </td>
                     </tr>

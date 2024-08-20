@@ -1,9 +1,11 @@
 </div> <!-- Closing container div -->
-<footer class="bg-gray-100 text-center mt-4">
-    <% if (typeof isAuthenticated !== 'undefined' && isAuthenticated) { %>
-        <a href="/logout" class="text-blue-500 hover:underline">Logout</a>
-    <% } %>
-    <div class="text-center p-3 bg-gray-200">
+<footer class="bg-staples-red text-white text-center mt-4">
+    <div class="p-4">
+        <% if (typeof isAuthenticated !== 'undefined' && isAuthenticated) { %>
+            <a href="/logout" class="text-white hover:underline">Logout</a>
+        <% } %>
+    </div>
+    <div class="bg-staples-red text-white p-3">
         © 2024 Sessions & Tokens Management App
     </div>
 </footer>

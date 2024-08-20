@@ -5,45 +5,50 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
-      .container {
-        max-width: 100%;
-        margin: 0 auto;
-        padding: 0 20px;
-      }
-
-      table {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 9px;
-      }
-
-      /* Responsive table styling */
-      @media (max-width: 900px) {
-        table, thead, tbody, th, td, tr {
-          display: block;
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+            padding: 0 20px;
         }
-      }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 9px;
+        }
+
+        /* Responsive table styling */
+        @media (max-width: 900px) {
+            table, thead, tbody, th, td, tr {
+                display: block;
+            }
+        }
+
+        .bg-staples-red {
+            background-color: #00704a;
+        }
+
+        .text-staples-red {
+            color: #00704a;
+        }
     </style>
     <title>Users Management</title>
 </head>
-<body>
-<header class="bg-blue-600">
-    <div class="container mx-auto flex justify-between items-center p-4">
-        <a class="text-white font-bold text-xl" href="/">Sessions & Tokens Management</a>
+<body class="font-roboto">
+<header class="bg-staples-red shadow-md">
+    <div class="container mx-auto flex justify-between items-center py-4">
+        <a class="text-white font-bold text-xl" href="/">Help Desk</a>
         <nav class="flex space-x-4">
-            <a class="text-white" href="/">Home</a>
-            <a class="text-white" href="/user-search">User Search</a>
-            <a class="text-white" href="/users">Users</a>
+            <a class="text-white hover:text-gray-300" href="/">Home</a>
+            <a class="text-white hover:text-gray-300" href="/user-search">User Search</a>
+            <a class="text-white hover:text-gray-300" href="/users">Users</a>
             <% if (isAuthenticated) { %>
-                <a class="text-white" href="/logout">Logout</a>
+                <a class="text-white hover:text-gray-300" href="/logout">Logout</a>
             <% } else { %>
-                <a class="text-white" href="/login">Login</a>
+                <a class="text-white hover:text-gray-300" href="/login">Login</a>
             <% } %>
         </nav>
     </div>
 </header>
 <div class="container mx-auto mt-4">
     <!-- Rest of your content -->
-</div>
-</body>
-</html>

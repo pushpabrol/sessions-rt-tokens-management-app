@@ -61,6 +61,7 @@ function customClaimCheck(claimCheck) {
 const app = express();
 const port = 3000;
 app.use(express.urlencoded({ extended: true }));
+app.use(express.json())
 
 app.use(session({
   secret: process.env.SESSION_SECRET,
@@ -278,6 +279,67 @@ app.get('/users', requiresAuth(),customClaimCheck((req, user) => {
     });
     res.redirect('/user-refresh-tokens/' + userId);
   });
+
+  app.post('/start-ciba', requiresAuth(), async (req, res) => {
+    const { userId } = req.body;
+    console.log(userId);
+    try {
+        const token = req.session.mgmtToken || await getManagementApiToken();
+        req.session.mgmtToken = token;
+
+        const user = await axios.get(`https://${process.env.AUTH0_DOMAIN}/api/v2/users/${userId}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        const response = await axios.post(`https://${process.env.AUTH0_DOMAIN}/bc-authorize`, new URLSearchParams({
+            client_id: process.env.AUTH0_CLIENT_ID,
+            client_secret: process.env.AUTH0_CLIENT_SECRET,
+            login_hint: JSON.stringify({
+                format: "iss_sub",
+                iss: `https://${process.env.AUTH0_DOMAIN}/`,
+                sub: user.data.user_id
+            }),
+            scope: 'openid'
+        }));
+
+        res.json({ auth_req_id: response.data.auth_req_id });
+    } catch (error) {
+        console.error('Error starting CIBA:', error);
+        res.status(500).json({ error: 'Failed to initiate CIBA' });
+    }
+});
+
+app.post('/poll-token', requiresAuth(), async (req, res) => {
+    const { auth_req_id } = req.body;
+    try {
+        const response = await axios.post(`https://${process.env.AUTH0_DOMAIN}/oauth/token`, new URLSearchParams({
+            client_id: process.env.AUTH0_CLIENT_ID,
+            client_secret: process.env.AUTH0_CLIENT_SECRET,
+            auth_req_id,
+            grant_type: 'urn:openid:params:grant-type:ciba'
+        }));
+        console.log(response.data);
+        if (response.data.access_token) {
+            // Unblock the user
+            const token = req.session.mgmtToken || await getManagementApiToken();
+            await axios.patch(`https://${process.env.AUTH0_DOMAIN}/api/v2/users/${req.body.userId}`, { blocked: false }, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            res.json({ access_token: response.data.access_token });
+        } else {
+            if(response.data.message && response.data.message === "not_implemented" ) res.json({ error: new Error("Not Implementted"), error_description: "Coming soon!" });
+            else if (response.data.error) res.json({ error: response.data.error, error_description: response.data.error_description });
+            else res.json({ error: "Unknown error", error_description: "Unknown" });
+        }
+    } catch (error) {
+        console.error('Error polling token endpoint:', error);
+        res.status(500).json({ error: 'Failed to poll token endpoint' });
+    }
+});
+
 
 
   app.get('/logout', (req, res) => {
