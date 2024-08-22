@@ -304,8 +304,9 @@ app.get('/users', requiresAuth(),customClaimCheck((req, user) => {
 
         res.json({ auth_req_id: response.data.auth_req_id });
     } catch (error) {
-        console.error('Error starting CIBA:', error);
-        res.status(500).json({ error: 'Failed to initiate CIBA' });
+        console.error('Error starting CIBA:', error.response.data);
+        const error_description = error.response?.data?.error_description || ""
+        res.status(500).json({ error: `Failed to initiate CIBA, Error Description - ${error_description}` });
     }
 });
 
