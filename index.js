@@ -164,19 +164,54 @@ app.get('/users', requiresAuth(),customClaimCheck((req, user) => {
     res.render('user-sessions', { sessions: sessions.data.sessions, isAuthenticated: req.oidc.isAuthenticated(), userId : userId  });
   });
 
-  app.get('/user-state/:userId',requiresAuth(),customClaimCheck((req, user) => {
-    console.log("claims");
-    return user.admin === true;
-  }), async (req, res) => {
+// Existing user state route
+app.get('/user-state/:userId', requiresAuth(), customClaimCheck((req, user) => {
+  console.log("claims");
+  return user.admin === true;
+}), async (req, res) => {
+  
+  const token = req.session.mgmtToken || await getManagementApiToken();
+  const userId = req.params.userId;
 
-    const token = req.session.mgmtToken ||  await getManagementApiToken();
-    const userId = req.params.userId;
-    const user = await axios.get(`https://${process.env.AUTH0_DOMAIN}/api/v2/users/${userId}`, {
+  const user = await axios.get(`https://${process.env.AUTH0_DOMAIN}/api/v2/users/${userId}`, {
+    headers: { 'Authorization': `Bearer ${token}` }
+  });
+  console.log(user.data);
+
+  // Check if user has PUSH as authentication method setup  
+  const authMethodsCall = await axios.get(`https://${process.env.AUTH0_DOMAIN}/api/v2/users/${userId}/authentication-methods`, {
+    headers: { 'Authorization': `Bearer ${token}` }
+  });
+  const authMethods = authMethodsCall.data;
+  console.log(authMethods);
+  const hasPushMfa = authMethods.some(authMethod => authMethod.type === 'guardian' && authMethod.confirmed === true);
+  console.log(hasPushMfa);
+
+  res.render('user-states', { user: user.data, isAuthenticated: req.oidc.isAuthenticated(), userId: userId, hasPushMfa });
+});
+
+// New route to dynamically generate the MFA enrollment ticket
+app.post('/generate-mfa-ticket', requiresAuth(), async (req, res) => {
+  try {
+    const { userId } = req.body; // User ID from the front-end request
+    const token = req.session.mgmtToken || await getManagementApiToken();
+
+    const mfaTicketResponse = await axios.post(`https://${process.env.AUTH0_DOMAIN}/api/v2/guardian/enrollments/ticket`, {
+      user_id: userId,
+      send_mail: false,
+      allow_multiple_enrollments: true,
+      factor: "push-notification"
+    }, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
-    console.log(user.data);
-    res.render('user-states', { user :user.data , isAuthenticated: req.oidc.isAuthenticated(), userId : userId });
-  });
+
+    res.json({ ticket_url: mfaTicketResponse.data.ticket_url });
+  } catch (err) {
+    console.error('Error generating MFA ticket:', err);
+    res.status(500).json({ error: 'Error generating MFA ticket' });
+  }
+});
+
 
   app.post('/update-user-state', requiresAuth(),customClaimCheck((req, user) => {
     console.log("claims");
@@ -192,7 +227,7 @@ app.get('/users', requiresAuth(),customClaimCheck((req, user) => {
       case 'Locked':
         updateData = { blocked: true };
         break;
-      case 'Forced Password Reset':
+      case 'Email Not Verified':
         updateData = { blocked: false, email_verified: false };
         break;
       default:
@@ -280,7 +315,10 @@ app.get('/users', requiresAuth(),customClaimCheck((req, user) => {
     res.redirect('/user-refresh-tokens/' + userId);
   });
 
-  app.post('/start-ciba', requiresAuth(), async (req, res) => {
+  app.post('/start-ciba', requiresAuth(),customClaimCheck((req, user) => {
+    console.log("claims");
+    return user.admin === true;
+  }), async (req, res) => {
     const { userId } = req.body;
     console.log(userId);
     try {
@@ -302,7 +340,7 @@ app.get('/users', requiresAuth(),customClaimCheck((req, user) => {
             scope: 'openid'
         }));
 
-        res.json({ auth_req_id: response.data.auth_req_id });
+        res.json({ auth_req_id: response.data.auth_req_id, interval: response.data.interval});
     } catch (error) {
         console.error('Error starting CIBA:', error.response.data);
         const error_description = error.response?.data?.error_description || ""
@@ -310,7 +348,10 @@ app.get('/users', requiresAuth(),customClaimCheck((req, user) => {
     }
 });
 
-app.post('/poll-token', requiresAuth(), async (req, res) => {
+app.post('/poll-token', requiresAuth(),customClaimCheck((req, user) => {
+  console.log("claims");
+  return user.admin === true;
+}), async (req, res) => {
     const { auth_req_id } = req.body;
     try {
         const response = await axios.post(`https://${process.env.AUTH0_DOMAIN}/oauth/token`, new URLSearchParams({

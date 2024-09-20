@@ -18,33 +18,79 @@
                     <% if (user.blocked) { %>
                         Locked
                     <% } else if (!user.email_verified) { %>
-                        Forced Password Reset
+                        Email Not Verified
                     <% } else { %>
                         Active
                     <% } %>
                 </td>
                 <td class="py-3 px-6 text-left">
-                    <% if (user.blocked) { %>
-                        <button id="ciba-button" class="bg-staples-red text-white py-2 px-4 rounded hover:bg-red-700 mt-2 sm:mt-0">Authenticate user to unblock them</button>
-                        <div id="spinner" class="hidden spinner-border text-staples-red mt-4"></div>
-                        <div id="countdown" class="hidden text-gray-600 mt-2">Time remaining: <span id="time-remaining">300</span> seconds</div>
-                    <% } else { %>
                         <form action="/update-user-state" method="post">
                             <input type="hidden" name="userId" value="<%= user.user_id %>">
                             <select name="state" class="form-select bg-white border border-gray-300 text-gray-700 py-2 px-3 rounded" required>
                                 <option value="Active" <%= !user.blocked && user.email_verified ? 'selected' : '' %>>Active</option>
                                 <option value="Locked" <%= user.blocked ? 'selected' : '' %>>Locked</option>
-                                <option value="Forced Password Reset" <%= !user.email_verified ? 'selected' : '' %>>Forced Password Reset</option>
+                                <option value="Email Not Verified" <%= !user.email_verified ? 'selected' : '' %>>Email Not Verified</option>
                             </select>
                             <button type="submit" class="bg-staples-red text-white py-2 px-4 rounded hover:bg-red-700 mt-2 sm:mt-0">Update</button>
                         </form>
-                    <% } %>
+
                 </td>
             </tr>
         </tbody>
     </table>
+    <div class="mx-auto mt-4">
+        <% if (hasPushMfa) { %>
+            <button id="ciba-button" class="bg-staples-red text-white py-2 px-4 rounded hover:bg-red-700 mt-2 sm:mt-0">Verify user via BaakChannel </button>
+            <div id="spinner" class="hidden spinner-border text-staples-red mt-4"></div>
+            <div id="countdown" class="hidden text-gray-600 mt-2">Time remaining: <span id="time-remaining">300</span> seconds</div>
+            <br>
+            <div style="word-break:break-all; word-wrap: normal;">This action is to demo Client Initiated Back Channel Authentication. You can initiate an authentication with the end user using a push notification!</div>
+        <% } else { %>
+            <button id="enroll-mfa-button" class="bg-staples-red text-white py-2 px-4 rounded hover:bg-red-700 mt-2 sm:mt-0">Enroll User in Push Authentication!</button>
+            <div style="word-break:break-all; word-wrap: normal;">This is for demo purposes only! - Click on the button to enroll user for MFA ( You will need the auth0 Guardian App to demo this). In real world use cases the user will already be enabled!</div>
+        <% } %>
+    </div>
 </div>
+
 <script>
+
+    // Open MFA Enrollment in a new popup window
+    // Generate a new MFA enrollment ticket when the button is clicked
+    if(document.getElementById('enroll-mfa-button') !== null) {
+    document.getElementById('enroll-mfa-button').addEventListener('click', function () {
+        const userId = '<%= userId %>';
+
+        // Make an AJAX request to generate a new MFA ticket
+        fetch('/generate-mfa-ticket', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId: userId })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.ticket_url) {
+                // Open the enrollment ticket in a popup window
+                const popup = window.open(data.ticket_url, 'EnrollMFA', 'width=500,height=600');
+
+                // Check if the popup is closed every 500ms
+                const popupChecker = setInterval(function () {
+                    if (popup.closed) {
+                        clearInterval(popupChecker); // Stop checking when popup is closed
+                        window.location.reload(); // Refresh parent window
+                    }
+                }, 500);
+            } else {
+                alert('Error generating MFA enrollment ticket.');
+            }
+        })
+        .catch(err => {
+            console.error('Error:', err);
+            alert('Failed to generate MFA ticket.');
+        });
+    });
+}
+
+    // CIBA button logic (unchanged)
     document.getElementById('ciba-button').addEventListener('click', function () {
         const spinner = document.getElementById('spinner');
         const countdown = document.getElementById('countdown');
@@ -73,8 +119,9 @@
         })
         .then(response => response.json())
         .then(data => {
+            console.log(data);
             if (data.auth_req_id) {
-                pollTokenEndpoint(data.auth_req_id, intervalId);
+                pollTokenEndpoint(data.auth_req_id,data.interval, intervalId);
             } else {
                 clearInterval(intervalId);
                 alert(data.error);
@@ -91,7 +138,7 @@
         });
     });
 
-    function pollTokenEndpoint(auth_req_id, countdownInterval) {
+    function pollTokenEndpoint(auth_req_id,interval,countdownInterval) {
         const userId = '<%= userId %>';
         const intervalId = setInterval(() => {
             fetch('/poll-token', {
@@ -101,12 +148,13 @@
             })
             .then(response => response.json())
             .then(data => {
+                console.log(data);
                 if (data.access_token) {
                     clearInterval(intervalId);
                     clearInterval(countdownInterval);
-                    alert('User successfully verified. Unblocking...');
+                    alert('User successfully verified. Please go ahead with making changes for this user!');
                     window.location.reload(); // Reload the page or redirect as needed
-                } else if (data.error) {
+                } else if (data.error & data.error !== "authorization_pending") {
                     clearInterval(intervalId);
                     clearInterval(countdownInterval);
                     alert('CIBA flow failed: ' + data.error_description);
@@ -117,7 +165,8 @@
             .catch(error => {
                 console.error('Error polling token endpoint:', error);
             });
-        }, 15000); // Poll every 15 seconds
+        }, interval*1000); // Poll every 15 seconds
     }
 </script>
+
 <%- include('partials/footer') %>
