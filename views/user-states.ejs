@@ -53,64 +53,17 @@
 </div>
 
 <script>
-
-    // Open MFA Enrollment in a new popup window
-    // Generate a new MFA enrollment ticket when the button is clicked
-    if(document.getElementById('enroll-mfa-button') !== null) {
-    document.getElementById('enroll-mfa-button').addEventListener('click', function () {
-        const userId = '<%= userId %>';
-
-        // Make an AJAX request to generate a new MFA ticket
-        fetch('/generate-mfa-ticket', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userId: userId })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.ticket_url) {
-                // Open the enrollment ticket in a popup window
-                const popup = window.open(data.ticket_url, 'EnrollMFA', 'width=500,height=600');
-
-                // Check if the popup is closed every 500ms
-                const popupChecker = setInterval(function () {
-                    if (popup.closed) {
-                        clearInterval(popupChecker); // Stop checking when popup is closed
-                        window.location.reload(); // Refresh parent window
-                    }
-                }, 500);
-            } else {
-                alert('Error generating MFA enrollment ticket.');
-            }
-        })
-        .catch(err => {
-            console.error('Error:', err);
-            alert('Failed to generate MFA ticket.');
-        });
-    });
-}
-
-    // CIBA button logic (unchanged)
+    // Handle CIBA initiation with binding message validation
     document.getElementById('ciba-button').addEventListener('click', function () {
         const spinner = document.getElementById('spinner');
         const countdown = document.getElementById('countdown');
         const timeRemainingEl = document.getElementById('time-remaining');
+        const bindingMessageEl = document.getElementById('binding-message');
+        const confirmButton = document.getElementById('confirm-binding-button');
         let timeRemaining = 300;
 
         spinner.classList.remove('hidden');
         countdown.classList.remove('hidden');
-
-        const intervalId = setInterval(() => {
-            timeRemaining -= 1;
-            timeRemainingEl.textContent = timeRemaining;
-
-            if (timeRemaining <= 0) {
-                clearInterval(intervalId);
-                alert('CIBA request timed out. Please try again.');
-                spinner.classList.add('hidden');
-                countdown.classList.add('hidden');
-            }
-        }, 1000);
 
         fetch('/start-ciba', {
             method: 'POST',
@@ -119,54 +72,80 @@
         })
         .then(response => response.json())
         .then(data => {
-            console.log(data);
-            if (data.auth_req_id) {
-                pollTokenEndpoint(data.auth_req_id,data.interval, intervalId);
+            if (data.auth_req_id && data.binding_message) {
+                // Show binding message and require confirmation
+                bindingMessageEl.textContent = `Binding Message: ${data.binding_message}`;
+                bindingMessageEl.classList.remove('hidden');
+                confirmButton.classList.remove('hidden');
+
+                // Add event listener for binding message confirmation
+                confirmButton.addEventListener('click', function () {
+                    bindingMessageEl.classList.add('hidden');
+                    confirmButton.classList.add('hidden');
+                    startPolling(data.auth_req_id, data.interval, data.binding_message);
+                });
             } else {
-                clearInterval(intervalId);
-                alert(data.error);
-                spinner.classList.add('hidden');
-                countdown.classList.add('hidden');
+                throw new Error(data.error || 'Failed to start CIBA.');
             }
         })
         .catch(error => {
-            clearInterval(intervalId);
             console.error('Error initiating CIBA:', error);
-            alert(error);
+            alert('Error: ' + (error.message || 'Failed to start CIBA.'));
             spinner.classList.add('hidden');
             countdown.classList.add('hidden');
         });
-    });
 
-    function pollTokenEndpoint(auth_req_id,interval,countdownInterval) {
-        const userId = '<%= userId %>';
-        const intervalId = setInterval(() => {
-            fetch('/poll-token', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ auth_req_id, userId })
-            })
-            .then(response => response.json())
-            .then(data => {
-                console.log(data);
-                if (data.access_token) {
-                    clearInterval(intervalId);
+        function startPolling(auth_req_id, interval, binding_message) {
+            const countdownInterval = setInterval(() => {
+                timeRemaining -= 1;
+                timeRemainingEl.textContent = timeRemaining;
+
+                if (timeRemaining <= 0) {
                     clearInterval(countdownInterval);
-                    alert('User successfully verified. Please go ahead with making changes for this user!');
-                    window.location.reload(); // Reload the page or redirect as needed
-                } else if (data.error & data.error !== "authorization_pending") {
-                    clearInterval(intervalId);
-                    clearInterval(countdownInterval);
-                    alert('CIBA flow failed: ' + data.error_description);
-                    document.getElementById('spinner').classList.add('hidden');
-                    document.getElementById('countdown').classList.add('hidden');
+                    alert('CIBA request timed out. Please try again.');
+                    spinner.classList.add('hidden');
+                    countdown.classList.add('hidden');
                 }
-            })
-            .catch(error => {
-                console.error('Error polling token endpoint:', error);
-            });
-        }, interval*1000); // Poll every 15 seconds
-    }
+            }, 1000);
+
+            pollTokenEndpoint(auth_req_id, interval, countdownInterval, binding_message);
+        }
+
+        function pollTokenEndpoint(auth_req_id, interval, countdownInterval, binding_message) {
+            const userId = '<%= userId %>';
+            const intervalId = setInterval(() => {
+                fetch('/poll-token', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ auth_req_id, userId, binding_message })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.access_token) {
+                        clearInterval(intervalId);
+                        clearInterval(countdownInterval);
+                        alert('User successfully verified. Please proceed.');
+                        window.location.reload();
+                    } else if (data.error && data.error !== "authorization_pending") {
+                        clearInterval(intervalId);
+                        clearInterval(countdownInterval);
+                        alert('CIBA flow failed: ' + data.error_description);
+                        spinner.classList.add('hidden');
+                        countdown.classList.add('hidden');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error polling token endpoint:', error);
+                });
+            }, interval * 1000);
+        }
+    });
 </script>
+
+
+<div class="mx-auto mt-4">
+    <div id="binding-message" class="hidden text-gray-800 font-bold mt-4"></div>
+    <button id="confirm-binding-button" class="hidden bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-700 mt-2 sm:mt-0">Confirm Binding Message</button>
+</div>
 
 <%- include('partials/footer') %>

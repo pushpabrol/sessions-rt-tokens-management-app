@@ -55,7 +55,17 @@ function customClaimCheck(claimCheck) {
   };
   
 
-  
+  const generateBindingMessage = (length = 64) => {
+    const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+-_.,:#';
+    let bindingMessage = '';
+    
+    for (let i = 0; i < length; i++) {
+        bindingMessage += charset.charAt(Math.floor(Math.random() * charset.length));
+    }
+
+    return bindingMessage;
+}
+
 
 
 const app = express();
@@ -328,7 +338,7 @@ app.post('/generate-mfa-ticket', requiresAuth(), async (req, res) => {
         const user = await axios.get(`https://${process.env.AUTH0_DOMAIN}/api/v2/users/${userId}`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
-
+        const bindingMessage = generateBindingMessage(6);
         const response = await axios.post(`https://${process.env.AUTH0_DOMAIN}/bc-authorize`, new URLSearchParams({
             client_id: process.env.AUTH0_CLIENT_ID,
             client_secret: process.env.AUTH0_CLIENT_SECRET,
@@ -337,10 +347,11 @@ app.post('/generate-mfa-ticket', requiresAuth(), async (req, res) => {
                 iss: `https://${process.env.AUTH0_DOMAIN}/`,
                 sub: user.data.user_id
             }),
-            scope: 'openid'
+            scope: 'openid',
+            binding_message: bindingMessage
         }));
 
-        res.json({ auth_req_id: response.data.auth_req_id, interval: response.data.interval});
+        res.json({ auth_req_id: response.data.auth_req_id, interval: response.data.interval, binding_message: bindingMessage});
     } catch (error) {
         console.error('Error starting CIBA:', error.response.data);
         const error_description = error.response?.data?.error_description || ""
@@ -352,13 +363,14 @@ app.post('/poll-token', requiresAuth(),customClaimCheck((req, user) => {
   console.log("claims");
   return user.admin === true;
 }), async (req, res) => {
-    const { auth_req_id } = req.body;
+    const { auth_req_id, binding_message } = req.body;
     try {
         const response = await axios.post(`https://${process.env.AUTH0_DOMAIN}/oauth/token`, new URLSearchParams({
             client_id: process.env.AUTH0_CLIENT_ID,
             client_secret: process.env.AUTH0_CLIENT_SECRET,
             auth_req_id,
-            grant_type: 'urn:openid:params:grant-type:ciba'
+            grant_type: 'urn:openid:params:grant-type:ciba',
+            binding_message
         }));
         console.log(response.data);
         if (response.data.access_token) {
