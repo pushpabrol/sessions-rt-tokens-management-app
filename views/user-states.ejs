@@ -24,42 +24,75 @@
                     <% } %>
                 </td>
                 <td class="py-3 px-6 text-left">
-                        <form action="/update-user-state" method="post">
-                            <input type="hidden" name="userId" value="<%= user.user_id %>">
-                            <select name="state" class="form-select bg-white border border-gray-300 text-gray-700 py-2 px-3 rounded" required>
-                                <option value="Active" <%= !user.blocked && user.email_verified ? 'selected' : '' %>>Active</option>
-                                <option value="Locked" <%= user.blocked ? 'selected' : '' %>>Locked</option>
-                                <option value="Email Not Verified" <%= !user.email_verified ? 'selected' : '' %>>Email Not Verified</option>
-                            </select>
-                            <button type="submit" class="bg-staples-red text-white py-2 px-4 rounded hover:bg-red-700 mt-2 sm:mt-0">Update</button>
-                        </form>
-
+                    <form action="/update-user-state" method="post">
+                        <input type="hidden" name="userId" value="<%= user.user_id %>">
+                        <select name="state" class="form-select bg-white border border-gray-300 text-gray-700 py-2 px-3 rounded" required>
+                            <option value="Active" <%= !user.blocked && user.email_verified ? 'selected' : '' %>>Active</option>
+                            <option value="Locked" <%= user.blocked ? 'selected' : '' %>>Locked</option>
+                            <option value="Email Not Verified" <%= !user.email_verified ? 'selected' : '' %>>Email Not Verified</option>
+                        </select>
+                        <button type="submit" class="bg-staples-red text-white py-2 px-4 rounded hover:bg-red-700 mt-2 sm:mt-0">Update</button>
+                    </form>
                 </td>
             </tr>
         </tbody>
     </table>
+
     <div class="mx-auto mt-4">
         <% if (hasPushMfa) { %>
-            <button id="ciba-button" class="bg-staples-red text-white py-2 px-4 rounded hover:bg-red-700 mt-2 sm:mt-0">Verify user via BaakChannel </button>
+            <button id="ciba-button" class="bg-staples-red text-white py-2 px-4 rounded hover:bg-red-700 mt-2 sm:mt-0">Verify user via BackChannel</button>
             <div id="spinner" class="hidden spinner-border text-staples-red mt-4"></div>
             <div id="countdown" class="hidden text-gray-600 mt-2">Time remaining: <span id="time-remaining">300</span> seconds</div>
+            <div id="binding-message" class="hidden text-gray-800 font-bold mt-4"></div>
+            <button id="confirm-binding-button" class="hidden bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-700 mt-2 sm:mt-0">Confirm Binding Message</button>
             <br>
             <div style="word-break:break-all; word-wrap: normal;">This action is to demo Client Initiated Back Channel Authentication. You can initiate an authentication with the end user using a push notification!</div>
         <% } else { %>
             <button id="enroll-mfa-button" class="bg-staples-red text-white py-2 px-4 rounded hover:bg-red-700 mt-2 sm:mt-0">Enroll User in Push Authentication!</button>
-            <div style="word-break:break-all; word-wrap: normal;">This is for demo purposes only! - Click on the button to enroll user for MFA ( You will need the auth0 Guardian App to demo this). In real world use cases the user will already be enabled!</div>
+            <div style="word-break:break-all; word-wrap: normal;">This is for demo purposes only! - Click on the button to enroll user for MFA (You will need the Auth0 Guardian App to demo this). In real world use cases, the user will already be enabled!</div>
         <% } %>
     </div>
 </div>
 
 <script>
-    // Handle CIBA initiation with binding message validation
+    // Open MFA Enrollment in a new popup window
+    if (document.getElementById('enroll-mfa-button') !== null) {
+        document.getElementById('enroll-mfa-button').addEventListener('click', function () {
+            const userId = '<%= userId %>';
+
+            fetch('/generate-mfa-ticket', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId: userId })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.ticket_url) {
+                    const popup = window.open(data.ticket_url, 'EnrollMFA', 'width=500,height=600');
+                    const popupChecker = setInterval(() => {
+                        if (popup.closed) {
+                            clearInterval(popupChecker);
+                            window.location.reload();
+                        }
+                    }, 500);
+                } else {
+                    alert('Error generating MFA enrollment ticket.');
+                }
+            })
+            .catch(err => {
+                console.error('Error:', err);
+                alert('Failed to generate MFA ticket.');
+            });
+        });
+    }
+
+    // Handle CIBA flow with binding message validation
     document.getElementById('ciba-button').addEventListener('click', function () {
         const spinner = document.getElementById('spinner');
         const countdown = document.getElementById('countdown');
-        const timeRemainingEl = document.getElementById('time-remaining');
         const bindingMessageEl = document.getElementById('binding-message');
         const confirmButton = document.getElementById('confirm-binding-button');
+        const timeRemainingEl = document.getElementById('time-remaining');
         let timeRemaining = 300;
 
         spinner.classList.remove('hidden');
@@ -73,12 +106,10 @@
         .then(response => response.json())
         .then(data => {
             if (data.auth_req_id && data.binding_message) {
-                // Show binding message and require confirmation
                 bindingMessageEl.textContent = `Binding Message: ${data.binding_message}`;
                 bindingMessageEl.classList.remove('hidden');
                 confirmButton.classList.remove('hidden');
 
-                // Add event listener for binding message confirmation
                 confirmButton.addEventListener('click', function () {
                     bindingMessageEl.classList.add('hidden');
                     confirmButton.classList.add('hidden');
@@ -141,11 +172,5 @@
         }
     });
 </script>
-
-
-<div class="mx-auto mt-4">
-    <div id="binding-message" class="hidden text-gray-800 font-bold mt-4"></div>
-    <button id="confirm-binding-button" class="hidden bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-700 mt-2 sm:mt-0">Confirm Binding Message</button>
-</div>
 
 <%- include('partials/footer') %>
